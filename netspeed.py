@@ -1,22 +1,19 @@
 #!/usr/bin/python
-# coding=utf8
+# coding: utf-8
+
 import urllib2
-import urllib
-import cookielib
-import json
 import time
 import sys
-import os
-import socket
 from BeautifulSoup import BeautifulSoup
 import random
 import logging
 import logging.handlers
 reload(sys)
 sys.setdefaultencoding('utf-8')
-#ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/537.22 (KHTML, like Gecko) Maxthon/4.0.4.1012 Chrome/25.0.1364.99 Safari/537.22"
+
 
 class NetSpeed(object):
+
     def __init__(self):
         self.initSelf()
         self.get_info()
@@ -27,8 +24,6 @@ class NetSpeed(object):
         self.mac = self.randomMAC()
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
-        self.logger.addHandler(logging.handlers.SysLogHandler("/dev/log"))
-
 
     def parse_info(self, html):
         def clean_html(html):
@@ -48,28 +43,35 @@ class NetSpeed(object):
         return info
 
     def speed_up(self):
-        uri = 'http://bj.wokuan.cn/web/improvespeed.php?ContractNo='+self.account+'&up='+self.new_speed_id+'&old='+self.old_speed_id+'&round='+self.random
+        uri = 'http://bj.wokuan.cn/web/improvespeed.php?ContractNo=' + self.account + \
+            '&up=' + self.new_speed_id + '&old=' + \
+            self.old_speed_id + '&round=' + self.random
         request = urllib2.Request(uri)
         response = urllib2.urlopen(request)
         html = response.read()
         return "success&00000000" in html
 
     def speed_heartbeat(self):
-        uri = 'http://bj.wokuan.cn/web/updateforfifteenmin.php?Mactxt='+self.cid+'&ADSLTxt='+self.account+'&Tick='+str(random.randint(7000000, 17000000))+'&OEM='
+        uri = 'http://bj.wokuan.cn/web/updateforfifteenmin.php?Mactxt=' + self.cid + \
+            '&ADSLTxt=' + self.account + '&Tick=' + \
+            str(random.randint(7000000, 17000000)) + '&OEM='
         request = urllib2.Request(uri)
         response = urllib2.urlopen(request)
         html = response.read()
         return html
 
     def speed_down(self):
-        uri = 'http://bj.wokuan.cn/web/lowerspeed.php?ContractNo='+self.account+'&round='+self.random
+        uri = 'http://bj.wokuan.cn/web/lowerspeed.php?ContractNo=' + \
+            self.account + '&round=' + self.random
         request = urllib2.Request(uri)
         response = urllib2.urlopen(request)
         html = response.read()
         return "success&00000000" in html
 
     def get_info(self):
-        uri = 'http://bj.wokuan.cn/web/startenrequest.php?ComputerMac=' + self.mac +'&ADSLTxt=' + self.account +'&Type=2&reqsn='+ self.genReqSN() +'&oem=00&ComputerId=' + self.cid
+        uri = 'http://bj.wokuan.cn/web/startenrequest.php?ComputerMac=' + self.mac + '&ADSLTxt=' + \
+            self.account + '&Type=2&reqsn=' + \
+            self.genReqSN() + '&oem=00&ComputerId=' + self.cid
         request = urllib2.Request(uri)
         response = urllib2.urlopen(request)
         html = response.read()
@@ -93,38 +95,42 @@ class NetSpeed(object):
             assert self.new_speed != "512"
 
     def randomMAC(self):
-        mac = [ 0x52, 0x54, 0x00,
-            random.randint(0x00, 0x7f),
-            random.randint(0x00, 0xff),
-            random.randint(0x00, 0xff) ]
+        mac = [0x52, 0x54, 0x00,
+               random.randint(0x00, 0x7f),
+               random.randint(0x00, 0xff),
+               random.randint(0x00, 0xff)]
         return ':'.join(map(lambda x: "%02x" % x, mac))
 
     def genReqSN(self):
-        return "00TF"+time.strftime('%Y%m%d%H%M')+"009262"
+        return "00TF" + time.strftime('%Y%m%d%H%M') + "009262"
 
     def genCompID(self):
         str = 'BFEBFBFF'
         chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
         length = len(chars) - 1
         for i in range(18):
-            str+=chars[random.randint(0, length)]
+            str += chars[random.randint(0, length)]
         return str
 
 if len(sys.argv) < 2:
     print(
-    """使用说明:
+        """使用说明:
         info -- 显示宽带信息
          up  -- 提速
         down -- 恢复""")
 else:
     my_netspeed = NetSpeed()
     if sys.argv[1] == "info":
-        print("SpeedUp: %s\nNormal speed: %s %s\nSpeedup speed: %s Mbps\nLeft time: %sh"
-              % (bool(my_netspeed.status), my_netspeed.old_speed, my_netspeed.old_speed_unit_name,
-                 my_netspeed.new_speed, my_netspeed.hours))
+        print("SpeedUp: %s\nNormal speed: %s %s\n"
+              "Speedup speed: %s Mbps\nLeft time: %sh"
+              % (bool(my_netspeed.status),
+                 my_netspeed.old_speed,
+                 my_netspeed.old_speed_unit_name,
+                 my_netspeed.new_speed,
+                 my_netspeed.hours))
     elif sys.argv[1] == "up":
         status = my_netspeed.speed_up()
-        while status == False:
+        while status is False:
             print("提升失败,60秒后重试!")
             logging.info("提升失败,60秒后重试!")
             time.sleep(60 * 1)
